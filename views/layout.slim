@@ -9,8 +9,12 @@ html lang="en"
     body 
         header Collectoneer
         nav 
-            a href="/login" Login/Register
+
             a href="/store" Store
-            a href="/inventory" Inventory   
-        
+            a href="/inventory" Inventory
+            - if session[:user] != nil
+                a href="/logout" Logout
+            - else      
+                a href="/login" Login/Register
+
         == yield
