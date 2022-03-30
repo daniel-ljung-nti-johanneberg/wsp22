@@ -5,18 +5,20 @@ require 'sassc'
 require 'bcrypt'
 require 'sqlite3'
 
-require_relative 'database'
+require_relative 'model'
 require_relative 'functions'
 
 
 enable :sessions
 
-also_reload 'database.rb', 'functions.rb'
+also_reload 'model.rb', 'functions.rb'
 
 get '/style.css' do
     scss :'scss/style', style: :compressed
 end
 
+
+p User.LoadItems(3)
 
 get('/') do
 
@@ -94,19 +96,18 @@ post('/register') do
     end
 end
 
+
 post('/login') do
 
-    user = params["user"]
+    username = params["user"]
     pwd = params["password"]
-    db.results_as_hash = true
-    result = db.execute("SELECT * FROM User WHERE username = ?", [user]).first
-    puts result
 
-    if result == nil
+    user = User.from_username(username)
+
+    if !user
         return slim(:"login", locals: {error: "Användaren finns inte!"}) #Fel användarnamn
-    elsif BCrypt::Password.new(result["password"]) == pwd
-        session[:user] = result["username"]
-        session[:user_id] = result["id"]
+    elsif BCrypt::Password.new(user.password_hash) == pwd
+        session[:user_id] = user.id
         redirect("/store") 
     else
         return slim(:"login", locals: {error: "Fel lösenord"}) #Fel lösenord
@@ -138,9 +139,11 @@ post('/buy/:item_id') do
     puts item_price.class
 
     if user_coins >= item_price
+
         remaining_coins =  user_coins - item_price
         db.execute("UPDATE User SET coins = ? WHERE id = ? ", remaining_coins, user_id)
         db.execute("INSERT into UserItemRelation (userid, itemid) VALUES (?, ?)", user_id, item_id)
+
     end
 
 end

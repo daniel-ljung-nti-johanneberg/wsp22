@@ -1,13 +1,19 @@
-def is_logged_in
-
-
-    session[:userid] != nil
-    
-
+def current_user
+    User.from_id(session[:user_id])
 end
 
-def db
-    _db = SQLite3::Database.new("data/database.db")
-    _db.results_as_hash = true
-    _db
+
+def current_items(user_id)
+
+    # Get Items
+
+    #UserItemRelation = User.from_id(session[:user_id])
+
+    if !user == nil
+
+
+
+
+    end
+
 end

@@ -12,7 +12,7 @@ html lang="en"
 
             a href="/store" Store
             a href="/inventory" Inventory
-            - if session[:user] != nil
+            - if session[:user_id] != nil
                 a href="/logout" Logout
             - else      
                 a href="/login" Login/Register

@@ -1,4 +1,5 @@
-h1 #{session[:user]}
+h1 #{current_user&.username || "inte inloggad"}
+
 
 form action='/buy/3' method='POST'
 
