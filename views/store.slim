@@ -1,6 +1,13 @@
-h1 #{current_user&.username || "inte inloggad"}
+h1#welcome Welcome #{current_user&.username || "inte inloggad"}, to the store!
 
 
-form action='/buy/3' method='POST'
 
-    input type='submit' value='Köp gurka'
+
+
+section.items
+    - items.each do |item|
+        form.items_holder action='/buy/#{item.id}' method='POST'
+            img src="#{item.image_url}" alt=""/
+            p = item.name 
+            p #{item.price} Coins
+            input type='submit' value='Köp #{item.name}'

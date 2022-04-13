@@ -21,15 +21,9 @@ class BaseModel
 
     def self.from_id(id)
 
-        result = db.execute("SELECT * FROM #{table} WHERE id = ?", [id]).first
+        result = db.execute("SELECT * FROM #{self.table} WHERE id = ?", id).first
         
-        #result && new(result)
-
-        if result == nil
-            return nil
-        else
-            return new(result)
-        end
+        result && new(result) # Om result finns skapa ett nytt objekt
 
     end
 
@@ -74,27 +68,55 @@ class User < BaseModel
     
     def self.LoadItems(userid)
 
+
+        # If userid unspecified, load all store items
+
+        if !userid
+            return db.execute("SELECT * FROM Items")
+        end
+
         their_items = Array.new
 
         relationtable = db.execute("SELECT * FROM UserItemRelation")
-
 
         relationtable.each do |element|
 
             if element["userid"] == userid
     
-                their_items << element["itemid"]
+                their_items << element["itemid"] 
     
             end
 
         end
 
-        
         return their_items
  
     end
 
 
-
 end
 
+
+
+class Item < BaseModel
+    attr_reader :name, :price, :image_url, :id, :stock
+
+
+    def self.table
+
+        'Items'
+
+    end
+
+
+    def initialize(data)
+        super data
+        @image_url = data["image_url"]
+        @price = data["price"]
+        @name = data["name"]
+        @id = data["id"]
+        @stock = data["id"]
+
+    end
+
+end

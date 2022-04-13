@@ -55,8 +55,14 @@ get('/logout') do
 end
 
 get('/store') do
+    
+    catalog = User.LoadItems(nil) 
+    catalog.map! do |item|
+        Item.from_id(item["id"])
+        
+    end
 
-    slim(:store)
+    slim(:store, locals: {items: catalog})
 
 end
 
@@ -64,8 +70,13 @@ end
 
 
 get('/inventory') do
-
-    slim(:inventory)
+    items = User.LoadItems(session[:user_id]) 
+    
+    items.map! do |id|
+        Item.from_id(id)
+        
+    end
+    slim(:inventory, locals: {items: items})
 
 end
 
@@ -146,5 +157,7 @@ post('/buy/:item_id') do
         db.execute("INSERT into UserItemRelation (userid, itemid) VALUES (?, ?)", user_id, item_id)
 
     end
+
+    redirect(:inventory)
 
 end
