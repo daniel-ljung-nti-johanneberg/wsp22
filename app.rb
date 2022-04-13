@@ -18,11 +18,12 @@ get '/style.css' do
 end
 
 
-p User.LoadItems(3)
+
+# p User.LoadItems(3)
 
 get('/') do
 
-    slim(:index)
+    slim :index, :layout => false
 
 end
 
