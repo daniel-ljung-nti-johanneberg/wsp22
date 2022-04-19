@@ -5,14 +5,16 @@ html lang="en"
         meta http-equiv="X-UA-Compatible" content="IE=edge"/
         meta name="viewport" content="width=device-width, initial-scale=1.0"/
         title Collectoneer
-        link rel="stylesheet" href="style.css"/
+        link rel="stylesheet" href="/style.css"/
     body 
+        
         header.main_header Collectoneer
         nav 
-
             a href="/store" Store
-            a href="/inventory" Inventory
+            a href="/search" Users
             - if session[:user_id] != nil
+                a href="/inventory" Inventory
+
                 a href="/logout" Logout
                 a href="/balance" Coins: #{current_user.coins }
             - else      

@@ -5,7 +5,6 @@ def db
 end
 
 
-
 class BaseModel
 
     attr_reader :id
@@ -62,6 +61,20 @@ class User < BaseModel
         else
             return new(result)
         end
+
+    end
+
+    def self.search(query)
+
+
+        users = db.execute("SELECT * FROM User WHERE username LIKE '%#{query}%'")
+
+        users.map do |user|
+
+            new user
+
+        end
+
 
     end
 

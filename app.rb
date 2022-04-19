@@ -23,13 +23,17 @@ end
 
 get('/') do
 
+    if current_user
+        return redirect('/store')
+    end
+
     slim :index, :layout => false
 
 end
 
 get('/register') do
 
-    if session[:user] != nil
+    if current_user
         redirect('/store')
     end
 
@@ -50,7 +54,7 @@ end
 get('/logout') do
 
     session.destroy
-    redirect('/login')
+    redirect('/')
 
 end
 
@@ -86,12 +90,30 @@ get('/create') do
     
 end
 
+get('/search') do
+
+    slim(:search, locals: { users: ""})
+    
+end
+
+get('/users/:user') do
+
+    username = params[:user]
+    user = User.from_username(username)
+
+    raise Sinatra::NotFound unless user
+
+    slim(:profile, locals: { user: user} ) 
+
+end
+
 
 
 
 post('/register') do
     user = params['user']
     pwd = params['password']
+
     p pwd
     pwd_confirm = params['pwd_confirm']
     result=db.execute('SELECT id FROM User WHERE username=?',user)
@@ -99,7 +121,8 @@ post('/register') do
         if pwd==pwd_confirm
             pwd_digest = BCrypt::Password.create(pwd)
             db.execute('INSERT INTO User (username, password) VALUES(?, ?)', user, pwd_digest)
-            #redirect('/welcome')
+            session[:user_id] = User.from_username(user).id
+            redirect('/store')
         else
             #redirect('/error') #Lösenord matchar ej
         end
@@ -132,11 +155,19 @@ post('/create') do
 
     name = params["name"]
     price = params["price"]
+    image_url = params["image_url"]
 
-    db.execute("INSERT into Items (name, price) VALUES (?, ?)", name, price)
+    db.execute("INSERT into Items (name, price, image_url) VALUES (?, ?, ?)", name, price, image_url)
 
 end
 
+
+post('/search') do
+
+    users = User.search(params["query"])
+    slim(:search, locals: {users: users})
+
+end
 
 post('/buy/:item_id') do
 

@@ -1,0 +1,11 @@
+form action='/search' method='POST'
+    input type='text' name='query'
+    input type='submit' value='Search'
+    - if users.length >= 1
+        - users.each do |user|
+            - name = user.username
+            br
+            a href="/users/#{name}" #{name}
+            
+
+
