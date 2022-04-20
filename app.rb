@@ -72,9 +72,6 @@ get('/store') do
 end
 
 
-
-
-
 get('/inventory') do
     items = User.LoadItems(session[:user_id]) 
     
@@ -98,6 +95,12 @@ get('/removeitem') do
     
 end
 
+get('/coinset') do
+
+    slim(:setcoins, locals: { feedback: "" })
+    
+end
+
 get('/search') do
 
     slim(:search, locals: { users: ""})
@@ -111,7 +114,14 @@ get('/users/:user') do
 
     raise Sinatra::NotFound unless user
 
-    slim(:profile, locals: { user: user} ) 
+    items = User.LoadItems(user.id) 
+    
+    items.map! do |id|
+        Item.from_id(id)
+        
+    end
+
+    slim(:profile, locals: { user: user, items: items} ) 
 
 end
 
@@ -148,12 +158,12 @@ post('/login') do
     user = User.from_username(username)
 
     if !user
-        return slim(:"login", locals: {error: "Användaren finns inte!"}) #Fel användarnamn
+        return slim(:login, locals: {error: "Användaren finns inte!"}) #Fel användarnamn
     elsif BCrypt::Password.new(user.password_hash) == pwd
         session[:user_id] = user.id
         redirect("/store") 
     else
-        return slim(:"login", locals: {error: "Fel lösenord"}) #Fel lösenord
+        return slim(:login, locals: {error: "Fel lösenord"}) #Fel lösenord
     end
 
 end
@@ -168,6 +178,32 @@ post('/create') do
     db.execute("INSERT into Items (name, price, image_url) VALUES (?, ?, ?)", name, price, image_url)
 
 end
+
+
+post('/setcoins') do
+
+    
+
+   username = params["username"]
+   coins = params["coins"]
+
+   user = db.execute("SELECT username FROM User WHERE username = ?", username)
+   
+   if user.length >= 1 && coins.to_i != 0
+
+    db.execute("UPDATE User SET coins = ? WHERE username = ? ",coins,username)
+    slim(:setcoins, locals: {feedback: "Coins för användaren: #{username}, är nu #{coins}"})
+
+   else
+    
+    slim(:setcoins, locals: {feedback: "Användaren fanns inte eller så angav du inte korrekt datatyp"})
+
+   end
+
+
+
+end
+
 
 post('/removeitem') do
 
