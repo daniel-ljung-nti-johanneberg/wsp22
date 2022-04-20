@@ -19,6 +19,13 @@ html lang="en"
                 a href="/balance" Coins: #{current_user.coins }
             - else      
                 a href="/login" Login/Register
-
+        
+        - if session[:user_id] != nil
+            - if User.from_id(session[:user_id]).rank >= 1
+                nav.admin_bar
+                    h2 Admin options:
+                    a href="/create" Upload new item
+                    a href="/removeitem" Remove item
+                    a href="/coinchanger" Coin giver
         == yield
 

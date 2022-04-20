@@ -47,6 +47,7 @@
             align-items: center;
 
             
+            
             a {
                 color: white;
                 margin-top: 20px;
@@ -81,6 +82,12 @@ nav {
 
     }
 
+    h2 {
+
+        color: maroon;
+
+    }
+
     font-size: 2rem;
     display: flex;
     height: 5rem;
@@ -88,6 +95,16 @@ nav {
     justify-content: space-evenly;
     align-items: center;
     background-color: rgb(17, 17, 17);
+
+}
+
+.admin_bar{
+
+    a {
+
+        color:maroon;
+
+    }
 
 }
 

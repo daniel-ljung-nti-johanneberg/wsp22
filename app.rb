@@ -23,11 +23,13 @@ end
 
 get('/') do
 
+    
     if current_user
         return redirect('/store')
     end
 
     slim :index, :layout => false
+
 
 end
 
@@ -59,7 +61,6 @@ get('/logout') do
 end
 
 get('/store') do
-    
     catalog = User.LoadItems(nil) 
     catalog.map! do |item|
         Item.from_id(item["id"])
@@ -69,6 +70,7 @@ get('/store') do
     slim(:store, locals: {items: catalog})
 
 end
+
 
 
 
@@ -87,6 +89,12 @@ end
 get('/create') do
 
     slim(:create)
+    
+end
+
+get('/removeitem') do
+
+    slim(:removeitem, locals: { feedback: "" })
     
 end
 
@@ -158,6 +166,28 @@ post('/create') do
     image_url = params["image_url"]
 
     db.execute("INSERT into Items (name, price, image_url) VALUES (?, ?, ?)", name, price, image_url)
+
+end
+
+post('/removeitem') do
+
+    item_name = params["item"]
+
+    item = db.execute("SELECT name FROM Items WHERE name = ?", item_name)
+    itemid = db.execute("SELECT id FROM Items WHERE name = ?", item_name)
+
+    
+    if item.length >= 1
+
+        db.execute("DELETE FROM Items WHERE name = ?", item_name)
+
+        db.execute("DELETE FROM UserItemRelation WHERE itemid = ?", itemid)
+
+        slim(:removeitem, locals: {feedback: "Item togs bort"})
+        
+    else
+        slim(:removeitem, locals: {feedback: "Item fanns ej"})
+    end
 
 end
 
