@@ -174,8 +174,8 @@ post('/removeitem') do
     item_name = params["item"]
 
     item = db.execute("SELECT name FROM Items WHERE name = ?", item_name)
-    itemid = db.execute("SELECT id FROM Items WHERE name = ?", item_name)
-
+    itemid = db.execute("SELECT id FROM Items WHERE name = ?", item_name).first["id"]
+    p itemid
     
     if item.length >= 1
 
@@ -184,7 +184,7 @@ post('/removeitem') do
         db.execute("DELETE FROM UserItemRelation WHERE itemid = ?", itemid)
 
         slim(:removeitem, locals: {feedback: "Item togs bort"})
-        
+
     else
         slim(:removeitem, locals: {feedback: "Item fanns ej"})
     end
