@@ -117,11 +117,26 @@ get('/users/:id') do
     items = User.LoadItems(user.id) 
     
     items.map! do |id|
-        Item.from_id(id)
         
+        Item.from_id(  )
+
     end
 
     slim(:profile, locals: { user: user, items: items} ) 
+
+end
+
+
+get('/trades') do
+
+    userid = session[:user_id]
+
+    p "test"
+
+    trades = db.execute("SELECT * FROM Trades WHERE reciever LIKE '%U#{userid}%'").first
+
+
+    slim(:trades, locals: { trades: trades } )
 
 end
 
@@ -142,11 +157,12 @@ get('/trade/:id') do
     end
 
     myitems.map! do |id|
+
         Item.from_id(id)
         
     end
 
-    slim(:trade, locals: { user: user, items: items, myitems: myitems} ) 
+    slim(:sendtrade, locals: { user: user, items: items, myitems: myitems} ) 
 
 end
 
@@ -287,10 +303,50 @@ end
 
 post('/sendtrade/:userid') do
 
-    from = session[:user_id]
-    to = params[:userid]
+    fromuserid = "U#{current_user.id}"
+    touserid = "U#{params[:userid].to_i}"
 
+    from_items = Array.new
+    to_items = Array.new
 
+    trade = params.to_a
+
+    p trade
+
+    trade.each do |item| 
+
+        if item[1] == "on"
+
+            info = item[0]
+
+            if info[0] == "1"
     
+                itemid = info[1..-1]
+                itemid = itemid[0..-5]
+                to_items << itemid.to_i
+    
+            else
+
+                itemid = info[1..-1]
+                itemid = itemid[0..-5]
+                from_items << itemid.to_i
+
+            end
+    
+        end
+
+     
+    end
+
+    from_items << fromuserid
+    to_items << touserid
+
+    p from_items.to_s
+    p to_items.to_s
+
+    db.execute('INSERT into Trades (sender, reciever) VALUES (?, ?)', from_items.to_s, to_items.to_s)
+
+    return
+
 
 end

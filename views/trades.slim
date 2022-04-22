@@ -1,0 +1,8 @@
+section.incomingtrades 
+    h1 Trades
+    p = trades["sender"]
+    p = trades["reciever"]
+    form action='/setcoins' method='POST'
+        input type='text' name='username'
+        input type='text' name='coins'
+        input type='submit' value='Set coins'

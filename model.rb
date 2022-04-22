@@ -112,6 +112,7 @@ end
 
 
 class Item < BaseModel
+
     attr_reader :name, :price, :image_url, :id, :stock
 
     def self.table
@@ -129,5 +130,13 @@ class Item < BaseModel
         @stock = data["id"]
 
     end
+
+end
+
+class Trades < Item
+
+
+    
+
 
 end
