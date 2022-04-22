@@ -107,10 +107,10 @@ get('/search') do
     
 end
 
-get('/users/:user') do
+get('/users/:id') do
 
-    username = params[:user]
-    user = User.from_username(username)
+    userid = params[:id]
+    user = User.from_id(userid)
 
     raise Sinatra::NotFound unless user
 
@@ -122,6 +122,31 @@ get('/users/:user') do
     end
 
     slim(:profile, locals: { user: user, items: items} ) 
+
+end
+
+
+get('/trade/:id') do
+
+    userid = params[:id]
+    user = User.from_id(userid)
+
+    raise Sinatra::NotFound unless user
+
+    items = User.LoadItems(user.id) 
+    myitems = User.LoadItems(current_user.id) 
+    p current_user.id
+    items.map! do |id|
+        Item.from_id(id)
+        
+    end
+
+    myitems.map! do |id|
+        Item.from_id(id)
+        
+    end
+
+    slim(:trade, locals: { user: user, items: items, myitems: myitems} ) 
 
 end
 
@@ -256,5 +281,16 @@ post('/buy/:item_id') do
     end
 
     redirect(:inventory)
+
+end
+
+
+post('/sendtrade/:userid') do
+
+    from = session[:user_id]
+    to = params[:userid]
+
+
+    
 
 end

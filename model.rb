@@ -114,13 +114,11 @@ end
 class Item < BaseModel
     attr_reader :name, :price, :image_url, :id, :stock
 
-
     def self.table
 
         'Items'
 
     end
-
 
     def initialize(data)
         super data

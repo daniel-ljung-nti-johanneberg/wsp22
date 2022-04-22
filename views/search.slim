@@ -4,8 +4,9 @@ form action='/search' method='POST'
     - if users.length >= 1
         - users.each do |user|
             - name = user.username
+            - id = user.id
             br
-            a href="/users/#{name}" #{name}
+            a href="/users/#{id}" #{name}
             
 
 

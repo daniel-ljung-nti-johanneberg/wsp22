@@ -8,4 +8,5 @@ section.items
             img src="#{item.image_url}" alt=""/
             p = item.name 
             p #{item.price} Coins
-            input type='submit' value='Köp #{item.name}'
+            - if current_user != nil 
+                input type='submit' value='Köp #{item.name}'

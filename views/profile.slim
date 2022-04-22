@@ -5,11 +5,16 @@ section.profile
         img src="/img/avatar.png" alt=""/
 
         div 
-            h2 = user.username
+            - if user.id == current_user.id
+                h2 My Profile
+            - else
+                h2 = user.username
             h2 = "Coins: #{user.coins}"
             h2 = "Items: #{User.LoadItems(user.id).length}"
-    
+            - if user.id != current_user.id
+                a href="/trade/#{user.id}" Trade
     h2 Items of #{user.username}  
+
 ul.items
     - items.each do |item|
         li.items_holder

@@ -181,7 +181,7 @@ nav {
         img {
 
            width: auto;
-           height: 65%;
+           height: 45%;
            border-radius: 5px;
 
         }
@@ -193,5 +193,27 @@ nav {
         }
 
     }
+
+}
+
+.sendtrade{
+
+    h2{
+
+        text-align: center;
+
+    }
+
+    input {
+
+        width: 50%;
+        margin-top: 20px;
+
+    }
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
 }

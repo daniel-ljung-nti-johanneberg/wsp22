@@ -1,0 +1,19 @@
+form.sendtrade action='/sendtrade' method='POST'
+    h2 #{user.username}'s items
+    ul.items
+        - items.each do |item|
+            li.items_holder
+                img src="/#{item.image_url}" alt=""/
+                p = item.name 
+                p #{item.price} Coins
+                input type='checkbox' name="#{item.id}"
+    h2 My items 
+    ul.items
+        - myitems.each do |item|
+            li.items_holder
+                img src="/#{item.image_url}" alt=""/
+                p = item.name 
+                p #{item.price} Coins
+                input type='checkbox' name="#{item.id}"
+
+    input type='submit' value='Send Trade'
