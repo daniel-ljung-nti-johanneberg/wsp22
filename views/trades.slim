@@ -1,5 +1,30 @@
-    - trades.each do |trade|
-        li.items_holder
-            - user = User.from_id(trade.last[0])
-            p Trade ID #{trade.first}
-            p From: #{user.username}
+    section.trades
+        - trades.each do |trade|
+                
+                - user = User.from_id(trade.last[0])
+
+                h2 Trade ID #{trade.first}
+                h2 From: #{user.username}
+
+                h2 Your items:
+
+                ul.items
+                    - trade[2].each do |item|
+                        li.items_holder
+                            img src="#{item.image_url}" alt=""/
+                            p = item.name
+                            p #{item.price} Coins
+                        
+                h2 For #{user.username}'s items: 
+
+                ul.items
+                    - trade[1].each do |item|
+                        li.items_holder
+                            img src="#{item.image_url}" alt=""/
+                            p = item.name
+                            p #{item.price} Coins
+                
+                form.sendtrade action='/accept_trade/#{trade.first}' method='POST'
+                    input type='submit' value='Accept Trade'
+                form.sendtrade action='/decline_trade/#{trade.first}' method='POST'
+                    input type='submit' value='Decline Trade'

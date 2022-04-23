@@ -79,8 +79,10 @@ get('/inventory') do
     
     items.map! do |id|
         Item.from_id(id)
-        
     end
+
+    p items
+
     slim(:inventory, locals: {items: items})
 
 end
@@ -133,14 +135,13 @@ get('/trades') do
 
     userid = session[:user_id]
 
-    p "test"
-
     new_trades = Array.new()
 
-    trades = db.execute("SELECT * FROM Trades WHERE reciever LIKE '%U#{userid}%'")
+    if userid != nil
+        trades = db.execute("SELECT * FROM Trades WHERE reciever LIKE '%U#{userid}%'")
+    end
 
     trades.map! do |trade|
-        
     
         new_trade = Array.new()
         trade_users = Array.new()
@@ -153,11 +154,25 @@ get('/trades') do
         new_trade << JSON[trade["reciever"]]
         trade_users << new_trade.last.pop[1..-1].to_i
 
+        new_trade[1].map! do |id|
+
+            Item.from_id(id)
+                 
+        end
+
+        new_trade[2].map! do |id|
+
+            Item.from_id(id)
+
+        end
+
         new_trade << trade_users
+
+        p new_trade
 
     end
 
-    p trades
+
 
     slim(:trades, locals: { trades: trades } )
 
@@ -370,6 +385,59 @@ post('/sendtrade/:userid') do
     db.execute('INSERT into Trades (sender, reciever) VALUES (?, ?)', from_items.to_s, to_items.to_s)
 
     return
+
+
+end
+
+post('/accept_trade/:tradeid') do
+
+    puts "hej"
+
+    tradeid = params[:tradeid]
+    userid = session[:user_id]
+
+    new_trades = Array.new()
+
+    if userid != nil
+        trade = db.execute("SELECT * FROM Trades WHERE id = ?", tradeid).first
+    end
+
+    p trade
+
+    new_trade = Array.new()
+    trade_users = Array.new()
+
+    new_trade << JSON[trade["sender"]]
+    trade_users << new_trade.last.pop[1..-1].to_i
+
+    new_trade << JSON[trade["reciever"]]
+    trade_users << new_trade.last.pop[1..-1].to_i
+
+    p new_trade
+
+    # Sender, SET reciever's items
+    rowid1 = db.execute("SELECT rowid, * FROM UserItemRelation WHERE itemid = ? AND userid = ?", itemid, userid).first
+    rowid2 = db.execute("SELECT rowid, * FROM UserItemRelation WHERE itemid = ? AND userid = ?", itemid, trade_users[1]).first["rowid"]
+
+    if (rowid1.length + rowid2.length) == (new_trade[0].length + new_trade[1].length)
+        for itemid in new_trade[0]
+
+            db.execute("DELETE FROM UserItemRelation WHERE rowid = ?", rowid1)
+        
+        end
+
+        for itemid in new_trade[1]
+
+            db.execute("DELETE FROM UserItemRelation WHERE rowid = ?", rowid2)
+
+        end
+
+    end
+end
+
+post('/decline_trade/:tradeid') do
+
+    tradeid = params[:tradeid]
 
 
 end
