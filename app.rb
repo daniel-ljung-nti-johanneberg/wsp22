@@ -4,6 +4,8 @@ require 'slim'
 require 'sassc'
 require 'bcrypt'
 require 'sqlite3'
+require 'json'
+
 
 require_relative 'model'
 require_relative 'functions'
@@ -118,7 +120,7 @@ get('/users/:id') do
     
     items.map! do |id|
         
-        Item.from_id(  )
+        Item.from_id(id)
 
     end
 
@@ -133,8 +135,29 @@ get('/trades') do
 
     p "test"
 
-    trades = db.execute("SELECT * FROM Trades WHERE reciever LIKE '%U#{userid}%'").first
+    new_trades = Array.new()
 
+    trades = db.execute("SELECT * FROM Trades WHERE reciever LIKE '%U#{userid}%'")
+
+    trades.map! do |trade|
+        
+    
+        new_trade = Array.new()
+        trade_users = Array.new()
+
+        new_trade << trade["id"]
+
+        new_trade << JSON[trade["sender"]]
+        trade_users << new_trade.last.pop[1..-1].to_i
+
+        new_trade << JSON[trade["reciever"]]
+        trade_users << new_trade.last.pop[1..-1].to_i
+
+        new_trade << trade_users
+
+    end
+
+    p trades
 
     slim(:trades, locals: { trades: trades } )
 

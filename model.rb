@@ -120,7 +120,7 @@ class Item < BaseModel
         'Items'
 
     end
-
+ 
     def initialize(data)
         super data
         @image_url = data["image_url"]

@@ -1,8 +1,5 @@
-section.incomingtrades 
-    h1 Trades
-    p = trades["sender"]
-    p = trades["reciever"]
-    form action='/setcoins' method='POST'
-        input type='text' name='username'
-        input type='text' name='coins'
-        input type='submit' value='Set coins'
+    - trades.each do |trade|
+        li.items_holder
+            - user = User.from_id(trade.last[0])
+            p Trade ID #{trade.first}
+            p From: #{user.username}
