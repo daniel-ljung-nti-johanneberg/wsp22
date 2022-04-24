@@ -136,8 +136,8 @@ get('/trades') do
     if current_user.id != nil
         trades = Trades.list(current_user.id)
     end
-    
-    slim(:trades, locals: { trades: trades } )
+    feedback = ""
+    slim(:trades, locals: { trades: trades, feedback: feedback } )
 
 end
 
@@ -341,7 +341,10 @@ post('/sendtrade/:userid') do
 
     Trades.create(from_items.to_s, to_items.to_s)
 
-    return
+    trades = []
+
+    slim(:trades, locals: {feedback: "Traden skickades", trades: trades})
+
 
 
 end
@@ -351,7 +354,27 @@ post('/accept_trade/:tradeid') do
     tradeid = params[:tradeid]
     reciever = session[:user_id]
     trade = Trades.select(tradeid)
-    Trades.exchange(trade, tradeid, reciever)
+    if trade != nil
+
+        if Trades.exchange(trade, tradeid, reciever)
+
+            Trades.delete(tradeid, reciever)
+            trades = []
+            slim(:trades, locals: {feedback: "Byte lyckades", trades: trades})
+
+
+        else
+            trades = []
+            Trades.delete(tradeid, reciever)
+            slim(:trades, locals: {feedback: "Antingen äger du inte bytet, eller så har föremålen redan bytts bort.", trades: trades})
+        end
+    else
+        trades = []
+        
+        slim(:trades, locals: {feedback: "Bytet fanns ej", trades: trades})
+    end
+
+    
 
 end
 

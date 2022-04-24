@@ -171,6 +171,8 @@ class Trades < BaseModel
         new_trade = Array.new()
         trade_users = Array.new()
 
+        p trade
+
         if trade == nil
             return
         end
@@ -183,7 +185,7 @@ class Trades < BaseModel
     
         if reciever != trade_users[1]
     
-            return
+            return false
 
         end
       
@@ -231,10 +233,13 @@ class Trades < BaseModel
                 db.execute('INSERT into UserItemRelation (userid, itemid) VALUES (?, ?)', trade_users[0], itemid)
     
             end
+
+            return true
     
         end
-    
-        db.execute("DELETE FROM Trades WHERE id = ?", tradeid)
+
+        return false
+        
 
     end
 
@@ -249,7 +254,7 @@ class Trades < BaseModel
         trade = select(tradeid)
         new_trade = Array.new()
         trade_users = Array.new
-        
+
         new_trade << JSON[trade["sender"]]
         trade_users << new_trade.last.pop[1..-1].to_i
     
