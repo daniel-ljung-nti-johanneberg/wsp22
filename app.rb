@@ -117,6 +117,7 @@ get('/users/:id') do
 
     userid = params[:id]
     user = User.from_id(userid)
+    
 
     raise Sinatra::NotFound unless user
 
@@ -180,15 +181,15 @@ post('/register') do
     result = User.select_id(user)
     if result.empty?
         if pwd==pwd_confirm
-            pwd_digest = BCrypt::Password.create(pwd)
+            pwd_digest = User.create_password(pwd)
             User.create(user, pwd_digest)
             session[:user_id] = User.from_username(user).id
             redirect('/store')
         else
-            #redirect('/error') #Lösenord matchar ej
+            redirect('/register') #Lösenord matchar ej
         end
     else
-        #redirect('/login') #User existerar redan
+        redirect('/login') #User existerar redan
     end
 end
 
@@ -202,7 +203,7 @@ post('/login') do
 
     if !user
         return slim(:login, locals: {error: "Användaren finns inte!"}) #Fel användarnamn
-    elsif BCrypt::Password.new(user.password_hash) == pwd
+    elsif User.check_password(user.password_hash, pwd)
         session[:user_id] = user.id
         redirect("/store") 
     else
@@ -238,10 +239,10 @@ post('/setcoins') do
         coins = params["coins"]
 
         #user = db.execute("SELECT username FROM User WHERE username = ?", username)
-        user = User.select_id(username)
-        if ! user.empty? && coins.to_i != 0
-
-            User.setcoins(coins, username)
+        user = User.select_id(username).first["id"]
+        p user
+        if ! user.to_i != 0 && coins.to_i != 0
+            User.setcoins(coins, user)
             slim(:setcoins, locals: {feedback: "Coins för användaren: #{username}, är nu #{coins}"})
 
         else
@@ -266,8 +267,8 @@ post('/removeitem') do
 
         item_name = params["item"]
 
-        item = Item.item_name(itemname)
-        itemid = Item.item_id(itemname)
+        item = Item.item_name(item_name)
+        itemid = Item.item_id(item_name)
 
         if item.length >= 1
 

@@ -77,6 +77,20 @@ class User < BaseModel
 
     end
 
+    def self.create_password(pwd)
+
+        return BCrypt::Password.create(pwd)
+
+    end
+
+    def self.check_password(password_hash, pwd)
+
+        return BCrypt::Password.new(password_hash) == pwd
+
+    end
+
+
+
     def self.search(query)
 
 
@@ -171,7 +185,7 @@ class Item < BaseModel
 
         db.execute("DELETE FROM Items WHERE name = ?", item_name)
 
-        db.execute("DELETE FROM UserItemRelation WHERE itemid = ?", itemid)
+        db.execute("DELETE FROM UserItemRelation WHERE itemid = ?", item_id)
 
     end
 

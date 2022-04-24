@@ -5,14 +5,18 @@ section.profile
         img src="/img/avatar.png" alt=""/
 
         div 
-            - if user.id == current_user.id
-                h2 My Profile
+            - if current_user != nil 
+                - if user.id == current_user.id
+                    h2 My Profile
+                - else 
+                    h2 = user.username
             - else
                 h2 = user.username
             h2 = "Coins: #{user.coins}"
             h2 = "Items: #{User.LoadItems(user.id).length}"
-            - if user.id != current_user.id
-                a href="/trade/#{user.id}" Trade
+            - if current_user != nil 
+                - if user.id != current_user.id
+                    a href="/trade/#{user.id}" Trade
     h2 Items of #{user.username}  
 
 ul.items
