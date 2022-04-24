@@ -54,13 +54,26 @@ class User < BaseModel
 
         result = db.execute("SELECT * FROM User WHERE username = ?", [username]).first
 
-        #result && new(result) # <== Control flow operator
+        result && new(result)
 
-        if result == nil
-            return nil
-        else
-            return new(result)
-        end
+    end
+
+    def self.select_id(username)
+
+        return db.execute('SELECT id FROM User WHERE username=?',username)
+
+    end
+
+    def self.create(user, pwd_digest)
+
+        db.execute('INSERT INTO User (username, password) VALUES(?, ?)', user, pwd_digest)
+
+    end
+
+    def self.setcoins(coins, userid)
+
+        db.execute("UPDATE User SET coins = ? WHERE id = ? ",coins,userid)
+
 
     end
 
@@ -106,6 +119,12 @@ class User < BaseModel
  
     end
 
+    def self.recieve_item(user_id, item_id)
+
+        db.execute("INSERT into UserItemRelation (userid, itemid) VALUES (?, ?)", user_id, item_id)
+
+    end
+
 
 end
 
@@ -127,6 +146,38 @@ class Item < BaseModel
         @price = data["price"]
         @name = data["name"]
         @id = data["id"]
+
+    end
+
+    def self.create(name, price, image_url)
+
+        db.execute("INSERT into Items (name, price, image_url) VALUES (?, ?, ?)", name, price, image_url)
+
+    end
+
+    def self.item_name(item_name)
+
+        db.execute("SELECT name FROM Items WHERE name = ?", item_name)
+
+    end
+
+    def self.item_id(item_name)
+
+        db.execute("SELECT id FROM Items WHERE name = ?", item_name).first["id"]
+
+    end
+
+    def self.delete(item_name, item_id)
+
+        db.execute("DELETE FROM Items WHERE name = ?", item_name)
+
+        db.execute("DELETE FROM UserItemRelation WHERE itemid = ?", itemid)
+
+    end
+
+    def self.price(item_id)
+
+        db.execute("SELECT price FROM Items WHERE id = ?", [item_id]).first["price"]
 
     end
 

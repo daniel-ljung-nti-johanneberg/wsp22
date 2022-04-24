@@ -20,9 +20,6 @@ get '/style.css' do
 end
 
 
-
-# p User.LoadItems(3)
-
 get('/') do
 
     
@@ -89,7 +86,12 @@ end
 
 get('/create') do
 
-    slim(:create)
+    if User.from_id(session[:user_id]).rank >= 1
+        slim(:create)
+    else
+        redirect('/store')
+    end
+
     
 end
 
@@ -174,13 +176,12 @@ post('/register') do
     user = params['user']
     pwd = params['password']
 
-    p pwd
     pwd_confirm = params['pwd_confirm']
-    result=db.execute('SELECT id FROM User WHERE username=?',user)
+    result = User.select_id(user)
     if result.empty?
         if pwd==pwd_confirm
             pwd_digest = BCrypt::Password.create(pwd)
-            db.execute('INSERT INTO User (username, password) VALUES(?, ?)', user, pwd_digest)
+            User.create(user, pwd_digest)
             session[:user_id] = User.from_username(user).id
             redirect('/store')
         else
@@ -213,35 +214,47 @@ end
 
 post('/create') do
 
-    name = params["name"]
-    price = params["price"]
-    image_url = params["image_url"]
+    if User.from_id(session[:user_id]).rank >= 1
 
-    db.execute("INSERT into Items (name, price, image_url) VALUES (?, ?, ?)", name, price, image_url)
+        name = params["name"]
+        price = params["price"]
+        image_url = params["image_url"]
+
+        Item.create(name, price, image_url)
+    
+    end
+
+    redirect('/store')
 
 end
 
 
 post('/setcoins') do
 
-    
+    if User.from_id(session[:user_id]).rank >= 1
 
-   username = params["username"]
-   coins = params["coins"]
 
-   user = db.execute("SELECT username FROM User WHERE username = ?", username)
-   
-   if user.length >= 1 && coins.to_i != 0
+        username = params["username"]
+        coins = params["coins"]
 
-    db.execute("UPDATE User SET coins = ? WHERE username = ? ",coins,username)
-    slim(:setcoins, locals: {feedback: "Coins för användaren: #{username}, är nu #{coins}"})
+        #user = db.execute("SELECT username FROM User WHERE username = ?", username)
+        user = User.select_id(username)
+        if ! user.empty? && coins.to_i != 0
 
-   else
-    
-    slim(:setcoins, locals: {feedback: "Användaren fanns inte eller så angav du inte korrekt datatyp"})
+            User.setcoins(coins, username)
+            slim(:setcoins, locals: {feedback: "Coins för användaren: #{username}, är nu #{coins}"})
 
-   end
+        else
 
+            slim(:setcoins, locals: {feedback: "Användaren fanns inte eller så angav du inte korrekt datatyp för coins"})
+
+        end
+
+    else
+
+        redirect('/store')
+
+    end
 
 
 end
@@ -249,22 +262,26 @@ end
 
 post('/removeitem') do
 
-    item_name = params["item"]
+    if User.from_id(session[:user_id]).rank >= 1
 
-    item = db.execute("SELECT name FROM Items WHERE name = ?", item_name)
-    itemid = db.execute("SELECT id FROM Items WHERE name = ?", item_name).first["id"]
-    p itemid
-    
-    if item.length >= 1
+        item_name = params["item"]
 
-        db.execute("DELETE FROM Items WHERE name = ?", item_name)
+        item = Item.item_name(itemname)
+        itemid = Item.item_id(itemname)
 
-        db.execute("DELETE FROM UserItemRelation WHERE itemid = ?", itemid)
+        if item.length >= 1
 
-        slim(:removeitem, locals: {feedback: "Item togs bort"})
+            Item.delete(item_name, itemid)
 
+            slim(:removeitem, locals: {feedback: "Item togs bort"})
+
+        else
+            slim(:removeitem, locals: {feedback: "Item fanns ej"})
+        end
     else
-        slim(:removeitem, locals: {feedback: "Item fanns ej"})
+        
+        redirect('/store')
+
     end
 
 end
@@ -282,18 +299,17 @@ post('/buy/:item_id') do
     item_id = params[:item_id]
     user_id = session[:user_id]
 
-    user_coins = db.execute("SELECT coins FROM User WHERE id = ?", [user_id]).first["coins"]
-    item_price = db.execute("SELECT price FROM Items WHERE id = ?", [item_id]).first["price"]
+    p user_id
 
-    puts user_coins.class
+    user_coins = User.from_id(session[:user_id]).coins
+    item_price = Item.price(item_id)
 
-    puts item_price.class
 
     if user_coins >= item_price
 
-        remaining_coins =  user_coins - item_price
-        db.execute("UPDATE User SET coins = ? WHERE id = ? ", remaining_coins, user_id)
-        db.execute("INSERT into UserItemRelation (userid, itemid) VALUES (?, ?)", user_id, item_id)
+        remaining_coins = user_coins - item_price
+        User.setcoins(remaining_coins, user_id)
+        User.recieve_item(user_id, item_id)
 
     end
 
@@ -368,9 +384,10 @@ post('/accept_trade/:tradeid') do
             Trades.delete(tradeid, reciever)
             slim(:trades, locals: {feedback: "Antingen äger du inte bytet, eller så har föremålen redan bytts bort.", trades: trades})
         end
+
     else
+
         trades = []
-        
         slim(:trades, locals: {feedback: "Bytet fanns ej", trades: trades})
     end
 

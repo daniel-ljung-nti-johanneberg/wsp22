@@ -3,20 +3,16 @@ def current_user
 end
 
 
-def current_items(user_id)
+# def current_items(user_id)
 
-    # Get Items
+#     # Get Items
 
-    #UserItemRelation = User.from_id(session[:user_id])
+#     #UserItemRelation = User.from_id(session[:user_id])
 
-    if !user == nil
+#     if !user == nil
+#     end
 
-
-
-
-    end
-
-end
+# end
 
 def format_trades(trades)
 
