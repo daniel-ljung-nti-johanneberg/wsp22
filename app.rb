@@ -358,7 +358,7 @@ end
 post('/decline_trade/:tradeid') do
 
     tradeid = params[:tradeid]
-    db.execute("DELETE FROM Trades WHERE id = ?", tradeid)
-
+    user = current_user.id
+    Trades.delete(tradeid, user)
 
 end

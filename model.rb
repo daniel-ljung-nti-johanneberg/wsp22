@@ -244,5 +244,25 @@ class Trades < BaseModel
 
     end
 
+    def self.delete(tradeid, user)
+
+        trade = select(tradeid)
+        new_trade = Array.new()
+        trade_users = Array.new
+        
+        new_trade << JSON[trade["sender"]]
+        trade_users << new_trade.last.pop[1..-1].to_i
+    
+        new_trade << JSON[trade["reciever"]]
+        trade_users << new_trade.last.pop[1..-1].to_i
+
+        reciever = trade_users[1]
+
+        if reciever == user
+            db.execute("DELETE FROM Trades WHERE id = ?", tradeid)
+        end
+
+    end
+
 
 end
