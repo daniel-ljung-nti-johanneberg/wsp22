@@ -153,9 +153,96 @@ class Trades < BaseModel
     def self.list(userid)
 
         trades = db.execute("SELECT * FROM Trades WHERE reciever LIKE '%U#{userid}%'")
-
         new_trades = format_trades(trades)
 
     end
+
+    def self.select(tradeid)
+
+        trade = db.execute("SELECT * FROM Trades WHERE id = ?", tradeid).first
+
+    end
+
+    def self.exchange(trade, tradeid, reciever)
+
+        match1 = true
+        match2 = true
+        trade = Trades.select(tradeid)
+        new_trade = Array.new()
+        trade_users = Array.new()
+
+        if trade == nil
+            return
+        end
+    
+        new_trade << JSON[trade["sender"]]
+        trade_users << new_trade.last.pop[1..-1].to_i
+    
+        new_trade << JSON[trade["reciever"]]
+        trade_users << new_trade.last.pop[1..-1].to_i
+    
+        if reciever != trade_users[1]
+    
+            return
+
+        end
+      
+        for itemid in new_trade.first
+           
+            rowid = db.execute("SELECT rowid, * FROM UserItemRelation WHERE itemid = ? AND userid = ?", itemid, trade_users[0])
+            if rowid.length < 1
+                match1 = false
+            end
+    
+        end
+    
+        for itemid in new_trade.last
+    
+            rowid = db.execute("SELECT rowid, * FROM UserItemRelation WHERE itemid = ? AND userid = ?", itemid, reciever)
+            if rowid.length < 1
+                match2 = false
+            end
+    
+        end
+    
+        if match1 && match2 == true
+    
+            for itemid in new_trade.first
+                rowid = db.execute("SELECT rowid, * FROM UserItemRelation WHERE itemid = ? AND userid = ?", itemid, trade_users[0])
+                new_rowid = rowid.first
+                db.execute("DELETE FROM UserItemRelation WHERE rowid = ?", new_rowid["rowid"])
+    
+            end
+    
+            for itemid in new_trade.last
+                rowid = db.execute("SELECT rowid, * FROM UserItemRelation WHERE itemid = ? AND userid = ?", itemid, reciever)
+                new_rowid = rowid.first
+                db.execute("DELETE FROM UserItemRelation WHERE rowid = ?", new_rowid["rowid"])
+            end
+    
+            for itemid in new_trade[0]
+    
+                db.execute('INSERT into UserItemRelation (userid, itemid) VALUES (?, ?)', reciever, itemid)
+    
+            end
+    
+            for itemid in new_trade[1]
+    
+                db.execute('INSERT into UserItemRelation (userid, itemid) VALUES (?, ?)', trade_users[0], itemid)
+    
+            end
+    
+        end
+    
+        db.execute("DELETE FROM Trades WHERE id = ?", tradeid)
+
+    end
+
+    def self.create(from_items, to_items)
+
+        db.execute('INSERT into Trades (sender, reciever) VALUES (?, ?)', from_items, to_items)
+
+    end
+
 
 end
