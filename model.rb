@@ -127,16 +127,35 @@ class Item < BaseModel
         @price = data["price"]
         @name = data["name"]
         @id = data["id"]
-        @stock = data["id"]
 
     end
 
 end
 
-class Trades < Item
+class Trades < BaseModel
 
 
-    
+    def self.table
 
+        'Trades'
+
+    end
+ 
+    def initialize(data)
+     
+        super data
+        @id = data["id"]
+        @sender = data["price"]
+        @reciever = data["name"]
+
+    end
+
+    def self.list(userid)
+
+        trades = db.execute("SELECT * FROM Trades WHERE reciever LIKE '%U#{userid}%'")
+
+        new_trades = format_trades(trades)
+
+    end
 
 end

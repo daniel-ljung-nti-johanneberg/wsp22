@@ -133,46 +133,9 @@ end
 
 get('/trades') do
 
-    userid = session[:user_id]
-
-    new_trades = Array.new()
-
-    if userid != nil
-        trades = db.execute("SELECT * FROM Trades WHERE reciever LIKE '%U#{userid}%'")
+    if current_user.id != nil
+        trades = Trades.list(current_user.id)
     end
-
-    trades.map! do |trade|
-    
-        new_trade = Array.new()
-        trade_users = Array.new()
-
-        new_trade << trade["id"]
-
-        new_trade << JSON[trade["sender"]]
-        trade_users << new_trade.last.pop[1..-1].to_i
-
-        new_trade << JSON[trade["reciever"]]
-        trade_users << new_trade.last.pop[1..-1].to_i
-
-        new_trade[1].map! do |id|
-
-            Item.from_id(id)
-                 
-        end
-
-        new_trade[2].map! do |id|
-
-            Item.from_id(id)
-
-        end
-
-        new_trade << trade_users
-
-        p new_trade
-
-    end
-
-
 
     slim(:trades, locals: { trades: trades } )
 
@@ -188,7 +151,7 @@ get('/trade/:id') do
 
     items = User.LoadItems(user.id) 
     myitems = User.LoadItems(current_user.id) 
-    p current_user.id
+
     items.map! do |id|
         Item.from_id(id)
         
@@ -349,8 +312,6 @@ post('/sendtrade/:userid') do
 
     trade = params.to_a
 
-    p trade
-
     trade.each do |item| 
 
         if item[1] == "on"
@@ -372,7 +333,6 @@ post('/sendtrade/:userid') do
             end
     
         end
-
      
     end
 
@@ -465,8 +425,6 @@ post('/accept_trade/:tradeid') do
 end
 
 post('/decline_trade/:tradeid') do
-
-    if current_user.id != trade_users[1]
 
     tradeid = params[:tradeid]
     db.execute("DELETE FROM Trades WHERE id = ?", tradeid)

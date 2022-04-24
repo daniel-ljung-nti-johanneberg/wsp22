@@ -15,6 +15,9 @@ html lang="en"
             - if session[:user_id] != nil
                 a href="/inventory" Inventory
 
+                a href="/trades" Trades
+
+
                 a href="/logout" Logout
                 a href="/balance" Coins: #{current_user.coins }
             - else      
