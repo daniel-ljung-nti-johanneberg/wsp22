@@ -1,4 +1,5 @@
-form.sendtrade action='/sendtrade/#{user.id}' method='POST'
+form.sendtrade action='/trades' method='POST'
+    input type="hidden" name="userid" value="#{user.id}"
     h2 #{user.username}'s items
     ul.items
         - items.each do |item|

@@ -84,10 +84,10 @@ get('/inventory') do
 
 end
 
-get('/create') do
+get('/items/new') do
 
     if User.from_id(session[:user_id]).rank >= 1
-        slim(:create)
+        slim(:new)
     else
         redirect('/store')
     end
@@ -213,7 +213,7 @@ post('/login') do
 end
 
 
-post('/create') do
+post('/items') do
 
     if User.from_id(session[:user_id]).rank >= 1
 
@@ -261,7 +261,7 @@ post('/setcoins') do
 end
 
 
-post('/removeitem') do
+post('/items/remove') do
 
     if User.from_id(session[:user_id]).rank >= 1
 
@@ -319,8 +319,9 @@ post('/buy/:item_id') do
 end
 
 
-post('/sendtrade/:userid') do
+post('/trades') do
 
+    
     fromuserid = "U#{current_user.id}"
     touserid = "U#{params[:userid].to_i}"
 
@@ -366,7 +367,7 @@ post('/sendtrade/:userid') do
 
 end
 
-post('/accept_trade/:tradeid') do
+post('/accept_trade') do
 
     tradeid = params[:tradeid]
     reciever = session[:user_id]
@@ -396,7 +397,7 @@ post('/accept_trade/:tradeid') do
 
 end
 
-post('/decline_trade/:tradeid') do
+post('/decline_trade') do
 
     tradeid = params[:tradeid]
     user = current_user.id

@@ -74,7 +74,6 @@ class User < BaseModel
 
         db.execute("UPDATE User SET coins = ? WHERE id = ? ",coins,userid)
 
-
     end
 
     def self.create_password(pwd)
