@@ -41,10 +41,34 @@ def format_trades(trades)
 
         end
 
+
+    
+
         new_trade << trade_users
+
+        new_trade << trade["note"] 
+
+        
 
     end
 
   
 end
 
+def lengthvalidation(input)
+    if input.length <= 3
+        return false
+    else
+        return true
+    end
+end
+  
+
+def check_quality(input)
+    answer = input.scan(/\D/).empty? #True om endast siffror eller tom sträng. RegEx: https://www3.ntu.edu.sg/home/ehchua/programming/howto/Regexe.html
+    if answer == true
+        return false
+    else
+        return true
+    end
+end

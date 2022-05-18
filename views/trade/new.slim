@@ -16,4 +16,5 @@ form.sendtrade action='/trades' method='POST'
                 p = item.name 
                 p #{item.price} Coins
                 input type='checkbox' name="0#{item.id}#{rand(1000..9000)}"
+    input type='text' name="note" value='Add a note to the trade'
     input type='submit' value='Send Trade'

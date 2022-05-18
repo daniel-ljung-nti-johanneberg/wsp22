@@ -183,8 +183,15 @@ class Item < BaseModel
     def self.delete(item_name, item_id)
 
         db.execute("DELETE FROM Items WHERE name = ?", item_name)
-
         db.execute("DELETE FROM UserItemRelation WHERE itemid = ?", item_id)
+
+        db.execute("DELETE FROM Trades WHERE reciever LIKE '%[#{item_id},%'")
+        db.execute("DELETE FROM Trades WHERE reciever LIKE '% #{item_id},%'")
+        db.execute("DELETE FROM Trades WHERE reciever LIKE '%#{item_id},%'")
+
+        db.execute("DELETE FROM Trades WHERE sender LIKE '%[#{item_id},%'")
+        db.execute("DELETE FROM Trades WHERE sender LIKE '% #{item_id},%'")
+        db.execute("DELETE FROM Trades WHERE sender LIKE '%#{item_id},%'")
 
     end
 
@@ -234,12 +241,6 @@ class Trades < BaseModel
         trade = Trades.select(tradeid)
         new_trade = Array.new()
         trade_users = Array.new()
-
-        p trade
-
-        if trade == nil
-            return
-        end
     
         new_trade << JSON[trade["sender"]]
         trade_users << new_trade.last.pop[1..-1].to_i
@@ -247,6 +248,7 @@ class Trades < BaseModel
         new_trade << JSON[trade["reciever"]]
         trade_users << new_trade.last.pop[1..-1].to_i
     
+        # Ser om reciever, (inloggad användare) äger bytet eller ej (Checkar även med db)
         if reciever != trade_users[1]
     
             return false
@@ -307,11 +309,40 @@ class Trades < BaseModel
 
     end
 
-    def self.create(from_items, to_items)
+    def self.create(from_items, to_items, note)
 
-        db.execute('INSERT into Trades (sender, reciever) VALUES (?, ?)', from_items, to_items)
+        db.execute('INSERT into Trades (sender, reciever, note) VALUES (?, ?, ?)', from_items, to_items, note)
 
     end
+
+    def self.update(tradeid, note, user)
+
+        trade = select(tradeid)
+        new_trade = Array.new()
+        trade_users = Array.new
+
+        new_trade << JSON[trade["sender"]]
+        trade_users << new_trade.last.pop[1..-1].to_i
+    
+        new_trade << JSON[trade["reciever"]]
+        trade_users << new_trade.last.pop[1..-1].to_i
+
+        sender = trade_users[0]
+        reciever = trade_users[1]
+
+        # Ser om nuvarande användare äger resursen, kan vara sender/reciever som byter note
+        if user == reciever || sender 
+
+            db.execute("UPDATE Trades SET note = ? WHERE id = ? ", note, tradeid)
+            return true
+
+        else
+            return false
+        end
+
+    end
+
+    
 
     def self.delete(tradeid, user)
         
@@ -329,6 +360,9 @@ class Trades < BaseModel
 
         if reciever == user
             db.execute("DELETE FROM Trades WHERE id = ?", tradeid)
+            return true
+        else
+            return false #äger ej tradeid
         end
 
     end

@@ -4,10 +4,11 @@
     section.trades
         - trades.each do |trade|
                 
-                - user = User.from_id(trade.last[0])
+                - user = User.from_id(trade[3][0])
 
                 h2 Trade ID #{trade.first}
                 h2 From: #{user.username}
+                h2 Note: #{trade.last}
 
                 h2 Your items:
 
@@ -26,6 +27,10 @@
                             img src="#{item.image_url}" alt=""/
                             p = item.name
                             p #{item.price} Coins
+
+                form.sendtrade action='/trade/#{trade.first}/edit' method='POST'
+                    input type='text' name="note" value='Edit trade note'
+                    input type='submit' value='Edit'
                 
                 form.sendtrade action='/trade/#{trade.first}/accept' method='POST'
                     input type='submit' value='Accept Trade'

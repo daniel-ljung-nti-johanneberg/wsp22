@@ -27,8 +27,8 @@ html lang="en"
             - if User.from_id(session[:user_id]).rank >= 1
                 nav.admin_bar
                     h2 Admin options:
-                    a href="/create" Upload new item
-                    a href="/removeitem" Remove item
-                    a href="/coinset" Set coins
+                    a href="/admin/item/new" Upload new item
+                    a href="/admin/item/remove" Remove item
+                    a href="/admin/user/edit" Set coins
         == yield
 

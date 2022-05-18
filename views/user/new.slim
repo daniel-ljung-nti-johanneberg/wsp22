@@ -4,3 +4,6 @@ form action='/register' method='POST'
     input type='password' name='password' placeholder="Password"
     input type='password' name='pwd_confirm' placeholder="Confirm password"
     input type='submit' value='Register'
+
+- if error
+    p #{error}

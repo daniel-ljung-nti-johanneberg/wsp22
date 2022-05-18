@@ -38,7 +38,7 @@ get('/register') do
         redirect('/store')
     end
 
-    slim(:"/user/new") 
+    slim(:"/user/new", locals: { error: "", success: ""})
 
 
 end
@@ -73,6 +73,7 @@ end
 
 
 get('/inventory') do
+
     items = User.LoadItems(session[:user_id]) 
     
     items.map! do |id|
@@ -85,7 +86,7 @@ get('/inventory') do
 
 end
 
-get('admin/item/new') do
+get('/admin/item/new') do
 
     if User.from_id(session[:user_id]).rank >= 1
         slim(:"/item/new")
@@ -93,18 +94,26 @@ get('admin/item/new') do
         redirect('/store')
     end
 
-    
 end
 
 get('/admin/item/remove') do
 
-    slim(:"/item/remove", locals: { feedback: "" })
+    if User.from_id(session[:user_id]).rank >= 1
+        slim(:"/item/remove", locals: { feedback: "" })
+    else
+        redirect('/store')
+    end
 
 end
 
 get('/admin/user/edit') do
 
-    slim(:"/user/edit", locals: { feedback: "" })
+    if User.from_id(session[:user_id]).rank >= 1
+        slim(:"/user/edit", locals: { feedback: "" })
+    else
+        redirect('/store')
+    end
+
     
 end
 
@@ -168,8 +177,6 @@ get('/trade/:id') do
 end
 
 
-
-
 post('/register') do
     user = params['user']
     pwd = params['password']
@@ -178,15 +185,25 @@ post('/register') do
     result = User.select_id(user)
     if result.empty?
         if pwd==pwd_confirm
-            pwd_digest = User.create_password(pwd)
-            User.create(user, pwd_digest)
-            session[:user_id] = User.from_username(user).id
-            redirect('/store')
+            if lengthvalidation(user) && lengthvalidation(pwd)
+                if check_quality(pwd) == true
+                    pwd_digest = User.create_password(pwd)
+                    User.create(user, pwd_digest)
+                    session[:user_id] = User.from_username(user).id
+                    redirect('/store')
+                else
+                    return slim(:"/user/new", locals: {error: "Du har skrivit endast siffror som lösenord, använd andra tecken."}) # Lösenord är bara siffror
+                end
+                
+            else
+                return slim(:"/user/new", locals: {error: "Både lösenord och användarnamn behöver vara minst 4 karaktärer"}) # För kort lösenord
+            end
+            
         else
-            redirect('/register') #Lösenord matchar ej
+            slim(:"/user/new", locals: { error: "Lösenorden stämmer inte överens"})
         end
     else
-        redirect('/login') #User existerar redan
+        slim(:"/user/login", locals: { error: "Användarnamnet finns redan!"})
     end
 end
 
@@ -199,12 +216,12 @@ post('/login') do
     user = User.from_username(username)
 
     if !user
-        return slim(:login, locals: {error: "Användaren finns inte!"}) #Fel användarnamn
+        return slim(:"/user/login", locals: {error: "Användaren finns inte!"}) #Fel användarnamn
     elsif User.check_password(user.password_hash, pwd)
         session[:user_id] = user.id
         redirect("/store") 
     else
-        return slim(:login, locals: {error: "Fel lösenord"}) #Fel lösenord
+        return slim(:"/user/login", locals: {error: "Fel lösenord"}) #Fel lösenord
     end
 
 end
@@ -244,7 +261,7 @@ post('/user/update') do
 
         else
 
-            slim(:"/user/edit", locals: {feedback: "Användaren fanns inte eller så angav du inte korrekt datatyp för coins"})
+            slim(:"/user/edit", locals: {feedback: "Användaren fanns inte / eller så angav du inte korrekt datatyp för coins"})
 
         end
 
@@ -256,6 +273,7 @@ post('/user/update') do
 
 
 end
+
 
 
 post('/item/remove') do 
@@ -320,51 +338,59 @@ end
 
 post('/trades') do
 
-    
     fromuserid = "U#{current_user.id}"
     touserid = "U#{params[:userid].to_i}"
-    p touserid
-
-    from_items = Array.new
-    to_items = Array.new
-
-    trade = params.to_a
-
-    trade.each do |item| 
-
-        if item[1] == "on"
-
-            info = item[0]
-
-            if info[0] == "1"
-    
-                itemid = info[1..-1]
-                itemid = itemid[0..-5]
-                to_items << itemid.to_i
-    
-            else
-
-                itemid = info[1..-1]
-                itemid = itemid[0..-5]
-                from_items << itemid.to_i
-
-            end
-    
-        end
-     
-    end
-
-    from_items << fromuserid
-    to_items << touserid
-
-    Trades.create(from_items.to_s, to_items.to_s)
-
+    note = params[:note]
     trades = []
 
+    
+    if check_quality(note) == false
+        bad_note = true
+        slim(:"/trade/index", locals: {feedback: "Använd även bokstäver i din anteckning", trades: trades})
+        
+    elsif lengthvalidation(note) == false
+        bad_note = true
+        slim(:"/trade/index", locals: {feedback: "Använd minst 4 bokstäver i din anteckning", trades: trades})
 
-    slim(:"/trade/index", locals: {feedback: "Traden skickades", trades: trades})
+    else
 
+        from_items = Array.new
+        to_items = Array.new
 
+        trade = params.to_a
+
+        trade.each do |item| 
+
+            if item[1] == "on"
+
+                info = item[0]
+
+                if info[0] == "1"
+        
+                    itemid = info[1..-1]
+                    itemid = itemid[0..-5]
+                    to_items << itemid.to_i
+        
+                else
+
+                    itemid = info[1..-1]
+                    itemid = itemid[0..-5]
+                    from_items << itemid.to_i
+
+                end
+        
+            end
+        
+        end
+
+        from_items << fromuserid
+        to_items << touserid
+
+        Trades.create(from_items.to_s, to_items.to_s, note)
+
+        slim(:"/trade/index", locals: {feedback: "Traden skickades", trades: trades})
+
+    end
 
 end
 
@@ -372,6 +398,7 @@ post('/trade/:id/accept') do
 
     tradeid = params[:id]
     reciever = session[:user_id]
+    trades = []
     p tradeid
     trade = Trades.select(tradeid)
     if trade != nil
@@ -392,8 +419,6 @@ post('/trade/:id/accept') do
 
     else
 
-        trades = []
-
         slim(:"/trade/index", locals: {feedback: "Bytet fanns ej", trades: trades})
     end
 
@@ -405,6 +430,37 @@ post('/trade/:id/decline') do
 
     tradeid = params[:id]
     user = current_user.id
-    Trades.delete(tradeid, user)
+    trades = []
+    # Ser ifall användaren äger bytet innan det tas bort
+    if Trades.delete(tradeid, user) == true
+        slim(:"/trade/index", locals: {feedback: "Bytet nekades av dig", trades: trades})
+    else
+        slim(:"/trade/index", locals: {feedback: "Du äger inte bytet", trades: trades})
+    end
+
+end
+
+post('/trade/:id/edit') do
+
+    tradeid = params[:id]
+    user = current_user.id
+    note = params[:note]
+    trades = []
+
+    if check_quality(note) == true
+        slim(:"/trade/index", locals: {feedback: "Använd även bokstäver i din anteckning", trades: trades})
+    end
+
+    if lengthvalidation(note) == false
+        slim(:"/trade/index", locals: {feedback: "Använd minst 4 bokstäver i din anteckning", trades: trades})
+    end
+
+    p tradeid
+    trades = []
+    if Trades.update(tradeid, note, user) == true
+        slim(:"/trade/index", locals: {feedback: "Bytets anteckning uppdaterades av dig", trades: trades})
+    else
+        slim(:"/trade/index", locals: {feedback: "Du äger inte bytet", trades: trades})
+    end
 
 end
