@@ -1,4 +1,4 @@
-form action='/search' method='POST'
+form action='/user' method='GET'
     input type='text' name='query'
     input type='submit' value='Search'
     - if users.length >= 1
@@ -6,7 +6,7 @@ form action='/search' method='POST'
             - name = user.username
             - id = user.id
             br
-            a href="/users/#{id}" #{name}
+            a href="/user/#{id}" #{name}
             
 
 

@@ -26,10 +26,9 @@
                             img src="#{item.image_url}" alt=""/
                             p = item.name
                             p #{item.price} Coins
-
-                input type="hidden" name="tradeid" value="#{trade.first}"
                 
-                form.sendtrade action='/accept_trade' method='POST'
+                form.sendtrade action='/trade/#{trade.first}/accept' method='POST'
                     input type='submit' value='Accept Trade'
-                form.sendtrade action='/decline_trade' method='POST'
+                    
+                form.sendtrade action='/trade/#{trade.first}/decline' method='POST'
                     input type='submit' value='Decline Trade'

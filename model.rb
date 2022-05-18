@@ -314,7 +314,7 @@ class Trades < BaseModel
     end
 
     def self.delete(tradeid, user)
-
+        
         trade = select(tradeid)
         new_trade = Array.new()
         trade_users = Array.new

@@ -4,7 +4,8 @@ h1#welcome Welcome #{current_user&.username || ""} to the store!
 
 section.items
     - items.each do |item|
-        form.items_holder action='/buy/#{item.id}' method='POST'
+        form.items_holder action='item/#{item.id}/buy' method='POST'
+            input type="hidden" name="itemid" value="#{item.id}"
             img src="#{item.image_url}" alt=""/
             p = item.name 
             p #{item.price} Coins

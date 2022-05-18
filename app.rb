@@ -38,7 +38,8 @@ get('/register') do
         redirect('/store')
     end
 
-    slim(:register)
+    slim(:"/user/new") 
+
 
 end
 
@@ -48,7 +49,7 @@ get('/login') do
         redirect('/store')
     end
 
-    slim(:login, locals: { error: "", success: ""})
+    slim(:"/user/login", locals: { error: "", success: ""})
 
 end
 
@@ -84,10 +85,10 @@ get('/inventory') do
 
 end
 
-get('/items/new') do
+get('admin/item/new') do
 
     if User.from_id(session[:user_id]).rank >= 1
-        slim(:new)
+        slim(:"/item/new")
     else
         redirect('/store')
     end
@@ -95,25 +96,21 @@ get('/items/new') do
     
 end
 
-get('/removeitem') do
+get('/admin/item/remove') do
 
-    slim(:removeitem, locals: { feedback: "" })
+    slim(:"/item/remove", locals: { feedback: "" })
+
+end
+
+get('/admin/user/edit') do
+
+    slim(:"/user/edit", locals: { feedback: "" })
     
 end
 
-get('/coinset') do
 
-    slim(:setcoins, locals: { feedback: "" })
-    
-end
 
-get('/search') do
-
-    slim(:search, locals: { users: ""})
-    
-end
-
-get('/users/:id') do
+get('/user/:id') do 
 
     userid = params[:id]
     user = User.from_id(userid)
@@ -129,7 +126,7 @@ get('/users/:id') do
 
     end
 
-    slim(:profile, locals: { user: user, items: items} ) 
+    slim(:"/user/index", locals: { user: user, items: items} ) 
 
 end
 
@@ -140,7 +137,7 @@ get('/trades') do
         trades = Trades.list(current_user.id)
     end
     feedback = ""
-    slim(:trades, locals: { trades: trades, feedback: feedback } )
+    slim(:"/trade/index", locals: { trades: trades, feedback: feedback } )
 
 end
 
@@ -166,7 +163,7 @@ get('/trade/:id') do
         
     end
 
-    slim(:sendtrade, locals: { user: user, items: items, myitems: myitems} ) 
+    slim(:"/trade/new", locals: { user: user, items: items, myitems: myitems} ) 
 
 end
 
@@ -230,7 +227,7 @@ post('/items') do
 end
 
 
-post('/setcoins') do
+post('/user/update') do 
 
     if User.from_id(session[:user_id]).rank >= 1
 
@@ -243,11 +240,11 @@ post('/setcoins') do
         p user
         if ! user.to_i != 0 && coins.to_i != 0
             User.setcoins(coins, user)
-            slim(:setcoins, locals: {feedback: "Coins för användaren: #{username}, är nu #{coins}"})
+            slim(:"/user/edit", locals: {feedback: "Coins för användaren: #{username}, är nu #{coins}"})
 
         else
 
-            slim(:setcoins, locals: {feedback: "Användaren fanns inte eller så angav du inte korrekt datatyp för coins"})
+            slim(:"/user/edit", locals: {feedback: "Användaren fanns inte eller så angav du inte korrekt datatyp för coins"})
 
         end
 
@@ -261,7 +258,7 @@ post('/setcoins') do
 end
 
 
-post('/items/remove') do
+post('/item/remove') do 
 
     if User.from_id(session[:user_id]).rank >= 1
 
@@ -274,10 +271,10 @@ post('/items/remove') do
 
             Item.delete(item_name, itemid)
 
-            slim(:removeitem, locals: {feedback: "Item togs bort"})
+            slim(:"/item/remove", locals: {feedback: "Item togs bort"})
 
         else
-            slim(:removeitem, locals: {feedback: "Item fanns ej"})
+            slim(:"/item/remove", locals: {feedback: "Item fanns ej"})
         end
     else
         
@@ -288,16 +285,18 @@ post('/items/remove') do
 end
 
 
-post('/search') do
+get('/users') do
 
     users = User.search(params["query"])
-    slim(:search, locals: {users: users})
+    slim(:"/user/users", locals: {users: users})
 
 end
 
-post('/buy/:item_id') do
 
-    item_id = params[:item_id]
+
+post('/item/:id/buy') do 
+
+    item_id = params[:id]
     user_id = session[:user_id]
 
     p user_id
@@ -324,6 +323,7 @@ post('/trades') do
     
     fromuserid = "U#{current_user.id}"
     touserid = "U#{params[:userid].to_i}"
+    p touserid
 
     from_items = Array.new
     to_items = Array.new
@@ -361,16 +361,18 @@ post('/trades') do
 
     trades = []
 
-    slim(:trades, locals: {feedback: "Traden skickades", trades: trades})
+
+    slim(:"/trade/index", locals: {feedback: "Traden skickades", trades: trades})
 
 
 
 end
 
-post('/accept_trade') do
+post('/trade/:id/accept') do
 
-    tradeid = params[:tradeid]
+    tradeid = params[:id]
     reciever = session[:user_id]
+    p tradeid
     trade = Trades.select(tradeid)
     if trade != nil
 
@@ -378,28 +380,30 @@ post('/accept_trade') do
 
             Trades.delete(tradeid, reciever)
             trades = []
-            slim(:trades, locals: {feedback: "Byte lyckades", trades: trades})
-
+            slim(:"/trade/index", locals: {feedback: "Byte lyckades", trades: trades})
 
         else
+
             trades = []
             Trades.delete(tradeid, reciever)
-            slim(:trades, locals: {feedback: "Antingen äger du inte bytet, eller så har föremålen redan bytts bort.", trades: trades})
+            slim(:"/trade/index", locals: {feedback: "Antingen äger du inte bytet, eller så har föremålen redan bytts bort.", trades: trades})
+
         end
 
     else
 
         trades = []
-        slim(:trades, locals: {feedback: "Bytet fanns ej", trades: trades})
+
+        slim(:"/trade/index", locals: {feedback: "Bytet fanns ej", trades: trades})
     end
 
     
 
 end
 
-post('/decline_trade') do
+post('/trade/:id/decline') do
 
-    tradeid = params[:tradeid]
+    tradeid = params[:id]
     user = current_user.id
     Trades.delete(tradeid, user)
 
