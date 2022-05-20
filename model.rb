@@ -6,6 +6,7 @@
     end
 
 
+    # Superclass, database objects    
     class BaseModel
 
         attr_reader :id
@@ -30,6 +31,7 @@
 
     end
 
+    # Userclass, For user
     class User < BaseModel
 
         attr_reader :username, :coins, :rank, :password_hash
@@ -50,7 +52,10 @@
             @password_hash = data['password']
 
         end
-
+        
+        # Returns a User object, from username
+        # @param username [String]
+        # @return [User] User object
         def self.from_username(username)
 
             result = db.execute("SELECT * FROM User WHERE username = ?", [username]).first
@@ -59,30 +64,42 @@
 
         end
 
+        # Returns id from username
         def self.select_id(username)
 
             return db.execute('SELECT id FROM User WHERE username=?',username)
 
         end
 
+        # Creates a user in DB, using user and hashed password
+        # @param user [String]
+        # @param pwd_digest [String]
         def self.create(user, pwd_digest)
 
             db.execute('INSERT INTO User (username, password) VALUES(?, ?)', user, pwd_digest)
 
         end
 
+        # Set coins of user to specified
+        # @param userid [Integer]
+        # @param coins [Integer]
         def self.setcoins(coins, userid)
 
             db.execute("UPDATE User SET coins = ? WHERE id = ? ",coins,userid)
 
         end
 
+        # Creates a hashed password from password
+        # @param pwd [String]
         def self.create_password(pwd)
 
             return BCrypt::Password.create(pwd)
 
         end
 
+        # Checks if hashed password matches password using BCrypt
+        # @param password_hash [String]
+        # @param pwd [String]
         def self.check_password(password_hash, pwd)
 
             return BCrypt::Password.new(password_hash) == pwd
@@ -90,7 +107,8 @@
         end
 
 
-
+        # Queries/searches DB for query
+        # @param query [String]
         def self.search(query)
 
 
@@ -105,7 +123,8 @@
 
         end
 
-        
+        # Load items of userid, gets items from DB
+        # @param userid [Integer]
         def self.LoadItems(userid)
 
 
@@ -133,6 +152,9 @@
     
         end
 
+        # Puts Item and User in a relationtable
+        # @param user_id [Integer]
+        # @param item_id [Integer]
         def self.recieve_item(user_id, item_id)
 
             db.execute("INSERT into UserItemRelation (userid, itemid) VALUES (?, ?)", user_id, item_id)
@@ -143,7 +165,7 @@
     end
 
 
-
+    # Item class, template for Items
     class Item < BaseModel
 
         attr_reader :name, :price, :image_url, :id, :stock
@@ -163,6 +185,11 @@
 
         end
 
+        # Creates item from parameters, puts it in DB
+        # @param name [String]
+        # @param price [Integer]
+        # @param image [Image data]
+        # @param image_url [String]
         def self.create(name, price, image, image_url)
 
             db.execute("INSERT into Items (name, price, image_url) VALUES (?, ?, ?)", name, price, image)
@@ -174,12 +201,16 @@
 
         end
 
+        # Returns item_name
+        # @param item_name [String]
         def self.item_name(item_name)
 
             db.execute("SELECT name FROM Items WHERE name = ?", item_name)
 
         end
 
+        # Returns item_id from item_name
+        # @param item_name [String]
         def self.item_id(item_name)
 
             item_id = db.execute("SELECT id FROM Items WHERE name = ?", item_name)
@@ -191,6 +222,9 @@
 
         end
 
+        # Deletes Item from all places in DB
+        # @param item_name [String]
+        # @param item_id [Integer]
         def self.delete(item_name, item_id)
 
             db.execute("DELETE FROM Items WHERE name = ?", item_name)
@@ -206,6 +240,8 @@
 
         end
 
+        # Returns price of Item
+        # @param price [Integer]
         def self.price(item_id)
 
             db.execute("SELECT price FROM Items WHERE id = ?", [item_id]).first["price"]
@@ -214,6 +250,7 @@
 
     end
 
+    # Trade class, template for Trades
     class Trades < BaseModel
 
 
@@ -232,6 +269,8 @@
 
         end
 
+        # Returns a list of all trades using userid
+        # @param userid [Integer]
         def self.list(userid)
 
             trades = db.execute("SELECT * FROM Trades WHERE reciever LIKE '%U#{userid}%'")
@@ -239,12 +278,18 @@
 
         end
 
+        # Selects a trade using tradeid and returns the trade
+        # @param tradeid [Integer]
         def self.select(tradeid)
 
             trade = db.execute("SELECT * FROM Trades WHERE id = ?", tradeid).first
 
         end
 
+        # Exchanges items of two users, if they still have the items as is in Trade
+        # @param trade [Array]
+        # @param tradeid [Integer]
+        # @param reciever [Integer]
         def self.exchange(trade, tradeid, reciever)
 
             match1 = true
@@ -320,12 +365,20 @@
 
         end
 
+        # Creates a trade with from_items and to_items + a note
+        # @param from_items [Array]
+        # @param to_items [Array]
+        # @param note [String]
         def self.create(from_items, to_items, note)
 
             db.execute('INSERT into Trades (sender, reciever, note) VALUES (?, ?, ?)', from_items, to_items, note)
 
         end
 
+        # Updates a trade, (the note), checks if user owns the trade
+        # @param tradeid [Integer]
+        # @param note [String]
+        # @param user [Integer]
         def self.update(tradeid, note, user)
 
             trade = select(tradeid)
@@ -354,7 +407,9 @@
         end
 
         
-
+        # Deletes a trade if the reciever matches the reciever in DB
+        # @param tradeid [Integer]
+        # @param user [Integer]
         def self.delete(tradeid, user)
             
             trade = select(tradeid)
