@@ -5,13 +5,12 @@ require 'sassc'
 require 'bcrypt'
 require 'sqlite3'
 require 'json'
-
-
-require_relative 'model'
+require_relative './model.rb'
 require_relative 'functions'
 
-
 enable :sessions
+
+WEBSITE_TITLE = "Auctioneer"
 
 also_reload 'model.rb', 'functions.rb'
 
@@ -19,6 +18,7 @@ get '/style.css' do
     scss :'scss/style', style: :compressed
 end
 
+# Index of the page if user is not logged in, else redirects to Store
 
 get('/') do
 
@@ -32,6 +32,8 @@ get('/') do
 
 end
 
+
+# Register page if user is not logged in, else redirects to Store
 get('/register') do
 
     if current_user
@@ -43,16 +45,18 @@ get('/register') do
 
 end
 
+# Login page if user is not logged in, else redirects to Store
 get('/login') do
 
     if session[:user] != nil
         redirect('/store')
     end
 
-    slim(:"/user/login", locals: { error: "", success: ""})
+    slim(:"/login", locals: { error: "", success: ""})
 
 end
 
+# Lougout - session destroy
 get('/logout') do
 
     session.destroy
@@ -60,6 +64,7 @@ get('/logout') do
 
 end
 
+# Loads items from DB and displays in store
 get('/store') do
     catalog = User.LoadItems(nil) 
     catalog.map! do |item|
@@ -71,31 +76,38 @@ get('/store') do
 
 end
 
-
+# Loads current user's items and displays if logged in else redirects to register
 get('/inventory') do
 
-    items = User.LoadItems(session[:user_id]) 
-    
-    items.map! do |id|
-        Item.from_id(id)
-    end
+    items = []
 
-    p items
+    if current_user.class != NilClass
+        items = User.LoadItems(session[:user_id]) 
+    
+        items.map! do |id|
+            Item.from_id(id)
+        end
+    
+    else
+        redirect("/register")
+    end
 
     slim(:inventory, locals: {items: items})
 
 end
 
+# Upload item page, if user is admin
 get('/admin/item/new') do
 
     if User.from_id(session[:user_id]).rank >= 1
-        slim(:"/item/new")
+        slim(:"/item/new", locals: {feedback: ""})
     else
         redirect('/store')
     end
 
 end
 
+# Remove item page, if user is admin
 get('/admin/item/remove') do
 
     if User.from_id(session[:user_id]).rank >= 1
@@ -106,6 +118,7 @@ get('/admin/item/remove') do
 
 end
 
+# Edit user page, if user is admin
 get('/admin/user/edit') do
 
     if User.from_id(session[:user_id]).rank >= 1
@@ -114,11 +127,12 @@ get('/admin/user/edit') do
         redirect('/store')
     end
 
-    
+
 end
 
 
-
+# Profile page of user
+# @param userid [Integer]
 get('/user/:id') do 
 
     userid = params[:id]
@@ -139,18 +153,22 @@ get('/user/:id') do
 
 end
 
-
+# Trades page if user is logged in else redirects to register
 get('/trades') do
 
-    if current_user.id != nil
+    trades = []
+    if current_user.class != NilClass
         trades = Trades.list(current_user.id)
+    else
+        redirect("/register")
     end
     feedback = ""
     slim(:"/trade/index", locals: { trades: trades, feedback: feedback } )
 
 end
 
-
+# Trade a User, view their items & current user's
+# @param userid [Integer]
 get('/trade/:id') do
 
     userid = params[:id]
@@ -176,7 +194,9 @@ get('/trade/:id') do
 
 end
 
-
+# Register users if validation goes through, and assigns a session
+# @param user [String]
+# @param pwd [String]
 post('/register') do
     user = params['user']
     pwd = params['password']
@@ -203,11 +223,13 @@ post('/register') do
             slim(:"/user/new", locals: { error: "Lösenorden stämmer inte överens"})
         end
     else
-        slim(:"/user/login", locals: { error: "Användarnamnet finns redan!"})
+        slim(:"/login", locals: { error: "Användarnamnet finns redan!"})
     end
 end
 
-
+# Assigns a session if hashed password and user matches DB
+# @param username [String]
+# @param pwd [String]
 post('/login') do
 
     username = params["user"]
@@ -216,52 +238,86 @@ post('/login') do
     user = User.from_username(username)
 
     if !user
-        return slim(:"/user/login", locals: {error: "Användaren finns inte!"}) #Fel användarnamn
+        return slim(:"/login", locals: {error: "Användaren finns inte!"}) #Fel användarnamn
     elsif User.check_password(user.password_hash, pwd)
         session[:user_id] = user.id
         redirect("/store") 
     else
-        return slim(:"/user/login", locals: {error: "Fel lösenord"}) #Fel lösenord
+        return slim(:"/login", locals: {error: "Fel lösenord"}) #Fel lösenord
     end
 
 end
 
-
+# Creates an item if current user has the permission to do so, 
+# @param name [String]
+# @param image [String]
+# @param price [Integer]
 post('/items') do
 
     if User.from_id(session[:user_id]).rank >= 1
 
         name = params["name"]
         price = params["price"]
-        image_url = params["image_url"]
 
-        Item.create(name, price, image_url)
+        if params[:image].class == NilClass
+            slim(:"/item/new", locals: {feedback: "Använd en fungerande bild"})
+        else
+
+            image = "img/#{params[:image][:filename]}"        
+            image_url = params[:image][:tempfile]
+    
+            if name.to_i != 0
+    
+                slim(:"/item/new", locals: {feedback: "Du angav fel datatyp"})
+    
+            elsif price.to_i < 0 
+    
+                slim(:"/item/new", locals: {feedback: "Du angav ett negativt värde"})
+    
+            elsif price.length == 0 || name.length == 0
+    
+                slim(:"/item/new", locals: {feedback: "Du angav inte ett pris eller namn"})
+    
+            else
+    
+                Item.create(name, price, image, image_url)
+                slim(:"/item/new", locals: {feedback: "Item skapades"})
+    
+            end
+
+        end
+        
+       
     
     end
 
-    redirect('/store')
-
 end
 
-
+# Updates user's coins if current user has the permission, validates input aswell
+# @param username [String]
+# @param coins [Integer]
 post('/user/update') do 
 
-    if User.from_id(session[:user_id]).rank >= 1
 
+    if User.from_id(session[:user_id]).rank >= 1
 
         username = params["username"]
         coins = params["coins"]
 
-        #user = db.execute("SELECT username FROM User WHERE username = ?", username)
-        user = User.select_id(username).first["id"]
+        user = User.select_id(username)
         p user
-        if ! user.to_i != 0 && coins.to_i != 0
-            User.setcoins(coins, user)
-            slim(:"/user/edit", locals: {feedback: "Coins för användaren: #{username}, är nu #{coins}"})
+        if user.empty?
+
+            slim(:"/user/edit", locals: {feedback: "Användaren fanns inte"})
+
+        elsif coins.to_i == 0
+
+            slim(:"/user/edit", locals: {feedback: "Du angav 0 coins eller fel datatyp"})
 
         else
 
-            slim(:"/user/edit", locals: {feedback: "Användaren fanns inte / eller så angav du inte korrekt datatyp för coins"})
+            User.setcoins(coins, user.first["id"])
+            slim(:"/user/edit", locals: {feedback: "Coins för användaren: #{username}, är nu #{coins}"})
 
         end
 
@@ -274,8 +330,8 @@ post('/user/update') do
 
 end
 
-
-
+# Removes item if it exists in DB and User has permission, validates input aswell
+# @param item [String]
 post('/item/remove') do 
 
     if User.from_id(session[:user_id]).rank >= 1
@@ -302,7 +358,8 @@ post('/item/remove') do
 
 end
 
-
+# Queries Users in DB for the input and displays result
+# @param query [String]
 get('/users') do
 
     users = User.search(params["query"])
@@ -311,6 +368,9 @@ get('/users') do
 end
 
 
+# Buys the item specified by params, if User has enough coins - aswell as subtracts from User coins
+# @param id [Integer]
+# @param user_id [Integer]
 
 post('/item/:id/buy') do 
 
@@ -335,6 +395,11 @@ post('/item/:id/buy') do
 
 end
 
+# Creates a trade with the User specified by the User and the User themself using items and trade note from params
+# @param fromuserid [Integer]
+# @param touserid [Integer]
+# @param note [String]
+# @param params [String] <= Trade
 
 post('/trades') do
 
@@ -394,6 +459,10 @@ post('/trades') do
 
 end
 
+# Accepts Trade if Sender and Reciever still has the items, otherwise declines: validates user owns trade
+# @param id [Integer]
+# @param reciever [Integer]
+
 post('/trade/:id/accept') do
 
     tradeid = params[:id]
@@ -426,6 +495,9 @@ post('/trade/:id/accept') do
 
 end
 
+# Declines trade if user owns trade
+# @param id [Integer]
+# @param reciever [Integer]
 post('/trade/:id/decline') do
 
     tradeid = params[:id]
@@ -440,6 +512,9 @@ post('/trade/:id/decline') do
 
 end
 
+# Edit Trade note if User owns trade and meets validation requirements
+# @param id [Integer]
+# @param note [String]
 post('/trade/:id/edit') do
 
     tradeid = params[:id]

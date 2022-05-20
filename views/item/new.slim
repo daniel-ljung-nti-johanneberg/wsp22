@@ -1,6 +1,11 @@
 
-form action='/items' method='POST'
+form action='/items' method='POST' enctype="multipart/form-data"
+
     input type='text' name='name' placeholder="Items namn"
     input type='text' name='price' placeholder="Pris"
-    input type='text' name='image_url' placeholder="Länk för bild"
+    input type="file" name="image"
+
     input type='submit' value='Upload Item'
+
+- if feedback
+    p #{feedback}
