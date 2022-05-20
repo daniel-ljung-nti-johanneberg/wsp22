@@ -10,8 +10,6 @@ require_relative 'functions'
 
 enable :sessions
 
-WEBSITE_TITLE = "Auctioneer"
-
 also_reload 'model.rb', 'functions.rb'
 
 get '/style.css' do
